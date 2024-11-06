@@ -1,98 +1,113 @@
 #include <iostream>
-#include <windows.h> // Para cambiar colores de texto
-#include <conio.h> // Para capturar input sin mostrarlo (en login)
+#include <cstring> // Para funciones como strcpy y strcmp
 using namespace std;
 
-// Prototipos de las funciones
-void mostrarMenu();
-void cargarDatos(int datos[], int& numDatos);
-void visualizarDatos(const int datos[], int numDatos);
-void cambiarColor(int color);
+// Definimos la estructura de Usuario con char arrays
+struct Usuario {
+    char nombre[50];
+    char apellido[50];
+    int edad;
+    char usuario[50];
+    char contrasena[50];
+};
+
+// Prototipos de funciones
+bool iniciarSesion(Usuario* usuarios, int numUsuarios);
+void registrarUsuario(Usuario*& usuarios, int& numUsuarios);
+void visualizarUsuarios(Usuario* usuarios, int numUsuarios);
 
 int main() {
-    // Variables para el login
-    string usuarioCorrecto = "admin";
-    string contrasenaCorrecta = "12345";
-    string usuarioIngresado, contrasenaIngresada;
-    
-    // Intento de login
-    cout << "=== Login ===" << endl;
-    cout << "Usuario: ";
-    cin >> usuarioIngresado;
-    cout << "Contrasena: ";
-    char c;
-    while ((c = _getch()) != '\r') { // Captura hasta Enter (Enter es '\r')
-        contrasenaIngresada += c;
-        cout << '*'; // Muestra asteriscos para ocultar la contraseña
-    }
-    cout << endl;
+    int numUsuarios = 0;
+    Usuario* usuarios = nullptr; // Inicialmente vacío
 
-    if (usuarioIngresado == usuarioCorrecto && contrasenaIngresada == contrasenaCorrecta) {
-        cout << "Acceso concedido.\n";
-        goto menu;
-    } else {
-        cout << "Usuario o contrasena incorrectos. Programa finalizado.\n";
-        return 0;
-    }
-
-menu:
-    mostrarMenu();
-    return 0;
-}
-
-void mostrarMenu() {
     int opcion;
-    int datos[5] = {0}; // Array para almacenar hasta 5 datos
-    int numDatos = 0;
-
     do {
-        cambiarColor(11); // Cambia el color a cian claro
-        cout << "\n=== Menu Principal ===" << endl;
-        cout << "1. Cargar Datos" << endl;
-        cout << "2. Visualizar Datos" << endl;
-        cout << "3. Salir" << endl;
+        cout << "\n=== Menu Principal ===\n";
+        cout << "1. Registrar Usuario\n";
+        cout << "2. Iniciar Sesion y Visualizar Datos\n";
+        cout << "3. Salir\n";
         cout << "Seleccione una opcion: ";
         cin >> opcion;
+        cin.ignore(); // Para limpiar el buffer de entrada
 
         switch (opcion) {
             case 1:
-                cargarDatos(datos, numDatos);
+                registrarUsuario(usuarios, numUsuarios);
                 break;
             case 2:
-                visualizarDatos(datos, numDatos);
+                if (iniciarSesion(usuarios, numUsuarios)) {
+                    visualizarUsuarios(usuarios, numUsuarios);
+                } else {
+                    cout << "Error: Usuario o contrasena incorrectos.\n";
+                }
                 break;
             case 3:
                 cout << "Saliendo del programa...\n";
                 break;
             default:
-                cout << "Opcion invalida, intente de nuevo.\n";
+                cout << "Opcion invalida. Intente de nuevo.\n";
         }
     } while (opcion != 3);
+
+    // Liberamos la memoria
+    delete[] usuarios;
+    return 0;
 }
 
-void cargarDatos(int datos[], int& numDatos) {
-    cambiarColor(10); // Cambia el color a verde
-    cout << "\n--- Carga de Datos ---" << endl;
-    for (int i = 0; i < 5; ++i) {
-        cout << "Ingrese un numero (" << i + 1 << " de 5): ";
-        cin >> datos[i];
-        numDatos++;
-    }
-    cout << "Datos cargados exitosamente.\n";
-}
+bool iniciarSesion(Usuario* usuarios, int numUsuarios) {
+    char usuarioIngresado[50], contrasenaIngresada[50];
+    cout << "\nIngrese su usuario: ";
+    cin.getline(usuarioIngresado, 50);
+    cout << "Ingrese su contrasena: ";
+    cin.getline(contrasenaIngresada, 50);
 
-void visualizarDatos(const int datos[], int numDatos) {
-    cambiarColor(14); // Cambia el color a amarillo
-    cout << "\n--- Visualizacion de Datos ---" << endl;
-    if (numDatos == 0) {
-        cout << "No hay datos para mostrar.\n";
-    } else {
-        for (int i = 0; i < numDatos; ++i) {
-            cout << "Dato " << i + 1 << ": " << datos[i] << endl;
+    for (int i = 0; i < numUsuarios; i++) {
+        if (strcmp(usuarios[i].usuario, usuarioIngresado) == 0 &&
+            strcmp(usuarios[i].contrasena, contrasenaIngresada) == 0) {
+            return true;
         }
     }
+    return false;
 }
 
-void cambiarColor(int color) {
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), color);
+void registrarUsuario(Usuario*& usuarios, int& numUsuarios) {
+    Usuario nuevoUsuario;
+    cout << "\n=== Registro de Usuario ===\n";
+    cout << "Nombre: ";
+    cin.getline(nuevoUsuario.nombre, 50);
+    cout << "Apellido: ";
+    cin.getline(nuevoUsuario.apellido, 50);
+    cout << "Edad: ";
+    cin >> nuevoUsuario.edad;
+    cin.ignore(); // Para limpiar el buffer de entrada
+    cout << "Usuario: ";
+    cin.getline(nuevoUsuario.usuario, 50);
+    cout << "Contrasena: ";
+    cin.getline(nuevoUsuario.contrasena, 50);
+
+    // Creamos un nuevo array con espacio adicional
+    Usuario* nuevosUsuarios = new Usuario[numUsuarios + 1];
+
+    // Copiamos los datos antiguos al nuevo array
+    for (int i = 0; i < numUsuarios; i++) {
+        nuevosUsuarios[i] = usuarios[i];
+    }
+
+    // Agregamos el nuevo usuario al final
+    nuevosUsuarios[numUsuarios] = nuevoUsuario;
+
+    // Liberamos la memoria antigua
+    delete[] usuarios;
+
+    // Actualizamos el puntero y el tamaño
+    usuarios = nuevosUsuarios;
+    numUsuarios++;
+}
+
+void visualizarUsuarios(Usuario* usuarios, int numUsuarios) {
+    cout << "\n=== Lista de Usuarios ===\n";
+    for (int i = 0; i < numUsuarios; i++) {
+        cout << "Nombre: " << usuarios[i].nombre << ", Apellido: " << usuarios[i].apellido
+             << ", Edad: " << usuarios[i].edad << ", Usuario: " << usuarios[i].usuario << endl;
+    }
 }
